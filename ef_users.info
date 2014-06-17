@@ -1,0 +1,12 @@
+name = EF Users
+core = 7.x
+package = EF
+version = 7.x-0.1
+project = ef_users
+dependencies[] = addressfield
+dependencies[] = features
+dependencies[] = text
+features[features_api][] = api:2
+features[field_base][] = field_phone
+features[field_instance][] = user-user-field_address
+features[field_instance][] = user-user-field_phone
