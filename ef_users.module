@@ -27,6 +27,12 @@ function ef_users_user_update(&$edit, $account, $category) {
 function _ef_users_update_commerce_customer_billing_profile($edit, $account) {
   $user_wrapper = entity_metadata_wrapper('user', $account);
 
+  // Prevent profile creation if addressfield not filled out.
+  $address = $user_wrapper->field_address;
+  if (!$address->thoroughfare->value()) {
+    return;
+  }
+
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'commerce_customer_profile')
     ->propertyCondition('type', 'billing')
