@@ -33,20 +33,8 @@ function _ef_users_update_commerce_customer_billing_profile($edit, $account) {
     return;
   }
 
-  $query = new EntityFieldQuery();
-  $query->entityCondition('entity_type', 'commerce_customer_profile')
-    ->propertyCondition('type', 'billing')
-    ->propertyCondition('uid', $account->uid)
-    ->propertyCondition('status', 1);
-  $result = $query->execute();
-
   // If this is an existing user, we'll have a result
-  if (isset($result['commerce_customer_profile'])) {
-    $commerce_customer_profile = reset($result['commerce_customer_profile']);
-    $commerce_customer_profile = commerce_customer_profile_load($commerce_customer_profile->profile_id);
-  }
-  // This is a new user
-  else {
+  if (!$commerce_customer_profile = _ef_users_get_customer_profile($account)) {
     $commerce_customer_profile = commerce_customer_profile_new('billing', $account->uid);
   }
   // Prepare the new address.
@@ -59,4 +47,31 @@ function _ef_users_update_commerce_customer_billing_profile($edit, $account) {
 
   $commerce_customer_profile->commerce_customer_address['und'][0] = $user_address;
   commerce_customer_profile_save($commerce_customer_profile);
+}
+
+/**
+ * Helper function to load a user's customer profile.
+ *
+ * @param $user
+ *   Loaded user entity object (minimum of uid required)
+ * @param string $type
+ *   The type of profile (defaults to billing.)
+ * @return object|null
+ *   Returns loaded profile entity object, or null if not found.
+ */
+function _ef_users_get_customer_profile($user, $type = 'billing') {
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'commerce_customer_profile')
+    ->propertyCondition('type', $type)
+    ->propertyCondition('uid', $user->uid)
+    ->propertyCondition('status', 1);
+  $result = $query->execute();
+
+  if (isset($result['commerce_customer_profile'])) {
+    $commerce_customer_profile = reset($result['commerce_customer_profile']);
+    return commerce_customer_profile_load($commerce_customer_profile->profile_id);
+  }
+  else {
+    return NULL;
+  }
 }
