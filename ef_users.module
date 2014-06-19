@@ -3,3 +3,54 @@
  * @file
  * Drupal needs this blank file.
  */
+
+/**
+ * Implements hook_user_insert().
+ */
+function ef_users_user_insert(&$edit, $account, $category) {
+  _ef_users_update_commerce_customer_billing_profile($edit, $account);
+}
+
+/**
+ * Implements hook_user_update().
+ */
+function ef_users_user_update(&$edit, $account, $category) {
+  _ef_users_update_commerce_customer_billing_profile($edit, $account);
+}
+
+/**
+ * Helper function to set user Commerce customer profiles.
+ *
+ * @param $edit
+ * @param $account
+ */
+function _ef_users_update_commerce_customer_billing_profile($edit, $account) {
+  $user_wrapper = entity_metadata_wrapper('user', $account);
+
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'commerce_customer_profile')
+    ->propertyCondition('type', 'billing')
+    ->propertyCondition('uid', $account->uid)
+    ->propertyCondition('status', 1);
+  $result = $query->execute();
+
+  // If this is an existing user, we'll have a result
+  if (isset($result['commerce_customer_profile'])) {
+    $commerce_customer_profile = reset($result['commerce_customer_profile']);
+    $commerce_customer_profile = commerce_customer_profile_load($commerce_customer_profile->profile_id);
+  }
+  // This is a new user
+  else {
+    $commerce_customer_profile = commerce_customer_profile_new('billing', $account->uid);
+  }
+  // Prepare the new address.
+  $user_address = $user_wrapper->field_address->value();
+  unset($user_address['element_key']);
+  $user_address['first_name'] = $user_wrapper->field_name_first->value();
+  $user_address['last_name'] = $user_wrapper->field_name_last->value();
+  $user_address['name_line'] = $user_address['first_name'] . ' ' . $user_address['last_name'];
+  $user_address += addressfield_default_values();
+
+  $commerce_customer_profile->commerce_customer_address['und'][0] = $user_address;
+  commerce_customer_profile_save($commerce_customer_profile);
+}
