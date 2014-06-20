@@ -19,7 +19,7 @@ function ef_users_field_default_field_instances() {
         'thoroughfare' => '',
         'premise' => '',
         'locality' => '',
-        'country' => 'AF',
+        'country' => 'DK',
       ),
     ),
     'deleted' => 0,
@@ -60,7 +60,7 @@ function ef_users_field_default_field_instances() {
         ),
       ),
       'type' => 'addressfield_standard',
-      'weight' => 6,
+      'weight' => 4,
     ),
   );
 
@@ -95,7 +95,7 @@ function ef_users_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'text_textfield',
-      'weight' => 7,
+      'weight' => 5,
     ),
   );
 
