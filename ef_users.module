@@ -10,13 +10,12 @@ function ef_users_init() {
   }
 
   global $user;
-  $user_wrapper = entity_metadata_wrapper('user', $user);
 
-  if (!$user_wrapper->field_name_first->value() || !$user_wrapper->field_name_last->value() || !$user_wrapper->field_address->value()) {
+  if (!_ef_users_profile_filled_in()) {
     drupal_set_message(t('Please set your contact information on your !link.', array('!link' => l(t('profile page'), 'user/' . $user->uid . '/edit-profile'))), 'status', FALSE);
   }
 
-  if (empty($user->picture)) {
+  if (!_ef_users_profile_picture_filled_in()) {
     drupal_set_message(t('Please set your user picture in your !link.', array('!link' => l(t('account page'), 'user/' . $user->uid . '/edit'))), 'status', FALSE);
   }
 }
@@ -91,4 +90,16 @@ function _ef_users_get_customer_profile($user, $type = 'billing') {
   else {
     return NULL;
   }
+}
+
+function _ef_users_profile_filled_in() {
+  global $user;
+  $user_wrapper = entity_metadata_wrapper('user', $user);
+
+  return !(!$user_wrapper->field_name_first->value() || !$user_wrapper->field_name_last->value() || !$user_wrapper->field_address->value());
+}
+
+function _ef_users_profile_picture_filled_in() {
+  global $user;
+  return !empty($user->picture);
 }
