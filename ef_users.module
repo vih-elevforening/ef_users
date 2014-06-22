@@ -5,6 +5,10 @@
  */
 
 function ef_users_init() {
+  if (!user_is_logged_in()) {
+    return;
+  }
+
   global $user;
   $user_wrapper = entity_metadata_wrapper('user', $user);
 
@@ -15,7 +19,6 @@ function ef_users_init() {
   if (empty($user->picture)) {
     drupal_set_message(t('Please set your user picture in your !link.', array('!link' => l(t('account page'), 'user/' . $user->uid . '/edit'))), 'status', FALSE);
   }
-
 }
 
 /**
