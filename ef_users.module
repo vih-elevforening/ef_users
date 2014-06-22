@@ -1,8 +1,10 @@
 <?php
 /**
  * @file
- * Drupal needs this blank file.
+ * Code for the EF Users feature.
  */
+
+include_once 'ef_users.features.inc';
 
 function ef_users_init() {
   if (!user_is_logged_in()) {
