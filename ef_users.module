@@ -4,6 +4,20 @@
  * Drupal needs this blank file.
  */
 
+function ef_users_init() {
+  global $user;
+  $user_wrapper = entity_metadata_wrapper('user', $user);
+
+  if (!$user_wrapper->field_name_first->value() || !$user_wrapper->field_name_last->value() || !$user_wrapper->field_address->value()) {
+    drupal_set_message(t('Please set your contact information on your !link.', array('!link' => l(t('profile page'), 'user/' . $user->uid . '/edit-profile'))), 'status', FALSE);
+  }
+
+  if (empty($user->picture)) {
+    drupal_set_message(t('Please set your user picture in your !link.', array('!link' => l(t('account page'), 'user/' . $user->uid . '/edit'))), 'status', FALSE);
+  }
+
+}
+
 /**
  * Implements hook_user_insert().
  */
