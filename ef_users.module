@@ -7,6 +7,42 @@
 include_once 'ef_users.features.inc';
 
 /**
+ * Implements hook_ctools_plugin_directory().
+ */
+function ef_users_ctools_plugin_directory($module, $plugin) {
+  return 'plugins/' . $plugin;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function ef_users_menu() {
+  $items['ef-users/find-groups'] = array(
+    'page callback' => '_ef_users_groups_autocomplete',
+    'access callback' => true,
+    'type' => MENU_CALLBACK
+  );
+  return $items;
+}
+
+function _ef_users_groups_autocomplete($string) {
+  $matches = array();
+
+  $query = new EntityFieldQuery();
+  $return = $query
+    ->entityCondition('entity_type', 'node')
+    ->fieldCondition(OG_GROUP_FIELD, 'value', 1, '=')
+    ->propertyCondition('title', '%' . check_plain($string) . '%', 'LIKE')
+    ->range(0, 10)
+    ->execute();
+
+  foreach (array_keys($return['node']) as $gid) {
+    $matches[$gid] = node_load($gid)->title;
+  }
+  drupal_json_output($matches);
+}
+
+/**
  * Implements hook_init().
  */
 function ef_users_init() {
@@ -49,8 +85,8 @@ function _ef_users_update_commerce_customer_billing_profile($edit, $account) {
   $user_wrapper = entity_metadata_wrapper('user', $account);
 
   // Prevent profile creation if addressfield not filled out.
-  $address = $user_wrapper->field_address;
-  if (!$address->thoroughfare->value()) {
+  $address = $user_wrapper->{'field_address'};
+  if (!$address || !$address->thoroughfare->value()) {
     return;
   }
 
@@ -102,7 +138,12 @@ function _ef_users_get_customer_profile($user, $type = 'billing') {
  */
 function _ef_users_profile_filled_in() {
   global $user;
-  $user_wrapper = entity_metadata_wrapper('user', $user);
+  /** @var EntityDrupalWrapper $user_wrapper */
+  $user_wrapper = entity_metadata_wrapper('user', $user->uid);
+
+  if (!$user_wrapper->__isset('field_name_first') || !$user_wrapper->__isset('field_name_last') || !$user_wrapper->__isset('field_address')) {
+    return false;
+  }
 
   return !(!$user_wrapper->field_name_first->value() || !$user_wrapper->field_name_last->value() || !$user_wrapper->field_address->value());
 }
@@ -113,4 +154,34 @@ function _ef_users_profile_filled_in() {
 function _ef_users_profile_picture_filled_in() {
   global $user;
   return !empty($user->picture);
+}
+
+/**
+ * Form callback for pane alerting users to join a group.
+ * @param $form
+ * @param $form_state
+ * @return mixed
+ */
+function ef_users_join_group_pane_form($form, &$form_state) {
+  $form['ef_user_group'] = array(
+    '#title' => t('Search for a group: '),
+    '#title_display' => 'invisible',
+    '#type' => 'textfield',
+    '#autocomplete_path' => 'ef-users/find-groups',
+    '#prefix' => '<div class="container-inline">' . t('You have not joined a group yet. Go and !url, or search for one',
+        array('!url' => l(t('find your class'), 'groups'))),
+    '#attributes' => array(
+      'style' => 'width: 150px',
+    )
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Go',
+    '#suffix' => '</div>',
+    '#attributes' => array(
+      'style' => 'margin: 0',
+    ),
+  );
+
+  return $form;
 }
