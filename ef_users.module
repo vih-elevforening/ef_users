@@ -185,3 +185,7 @@ function ef_users_join_group_pane_form($form, &$form_state) {
 
   return $form;
 }
+
+function ef_users_join_group_pane_form_submit($form, &$form_state) {
+  $form_state['redirect'] = 'node/' . $form_state['values']['ef_user_group'];
+}
