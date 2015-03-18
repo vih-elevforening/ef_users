@@ -25,6 +25,54 @@ function ef_users_menu() {
   return $items;
 }
 
+/**
+ * Implements hook_menu_alter().
+ */
+function ef_users_menu_alter(&$items) {
+  $items['user/%user/contacts/messages/popup/%user']['access callback'] = 'ef_users_privatemsg_write_access';
+  $items['messages/new']['access callback'] = 'ef_users_privatemsg_write_access';
+}
+
+/**
+ * Implements hook_permission().
+ */
+function ef_users_permission() {
+  return array(
+    'write privatemsg to everyone' => array(
+      'title' => t('Private message anyone'),
+      'description' => t('Grant the ability to message any user.'),
+    ),
+  );
+}
+
+/**
+ * Access callback for writing a private message to another user;
+ * Checks permissions and makes sure that the given user and the logged-in user
+ * are Trusted-Contacts.
+ *
+ * Overrides commons_trusted_contacts_privatemsg_write_access.
+ * @see commons_trusted_contacts_privatemsg_write_access()
+ *
+ * @param $account
+ *
+ * @return bool
+ */
+function ef_users_privatemsg_write_access($account) {
+  global $user;
+
+  if (user_access('administer group')) {
+    // Always allow admin to send private messages.
+    return TRUE;
+  }
+
+  $uid = isset($account->uid) ? $account->uid : $account;
+
+  return (privatemsg_user_access('write privatemsg') &&
+          (commons_group_is_trusted_contact($uid)
+           || user_access('write privatemsg to everyone')
+           || variable_get('commons_trusted_contacts_global_messaging', FALSE)));
+}
+
 function _ef_users_groups_autocomplete($string) {
   $matches = array();
 
@@ -187,5 +235,5 @@ function ef_users_join_group_pane_form($form, &$form_state) {
 }
 
 function ef_users_join_group_pane_form_submit($form, &$form_state) {
-  $form_state['redirect'] = 'node/' . $form_state['values']['ef_user_group'];
+  $form_state['redirect'] = 'node/' . check_plain($form_state['values']['ef_user_group']);
 }
