@@ -128,14 +128,24 @@ function ef_users_user_update(&$edit, $account, $category) {
  *
  * @param $edit
  * @param $account
+ *
+ * @return boolean
  */
 function _ef_users_update_commerce_customer_billing_profile($edit, $account) {
+  /** @var EntityDrupalWrapper $user_wrapper */
   $user_wrapper = entity_metadata_wrapper('user', $account);
 
   // Prevent profile creation if addressfield not filled out.
-  $address = $user_wrapper->{'field_address'};
-  if (!$address || !$address->thoroughfare->value()) {
-    return;
+  try {
+    /** @var EntityStructureWrapper $address */
+    $address = $user_wrapper->{'field_address'};
+    if (!$address->value() || !$address->{'thoroughfare'}->value()) {
+      return false;
+    }
+
+
+  } catch(EntityMetadataWrapperException $e) {
+    return false;
   }
 
   // If this is an existing user, we'll have a result
@@ -143,15 +153,23 @@ function _ef_users_update_commerce_customer_billing_profile($edit, $account) {
     $commerce_customer_profile = commerce_customer_profile_new('billing', $account->uid);
   }
   // Prepare the new address.
-  $user_address = $user_wrapper->field_address->value();
+  $user_address = $user_wrapper->{'field_address'}->value();
   unset($user_address['element_key']);
-  $user_address['first_name'] = $user_wrapper->field_name_first->value();
-  $user_address['last_name'] = $user_wrapper->field_name_last->value();
+  $user_address['first_name'] = $user_wrapper->{'field_name_first'}->value();
+  $user_address['last_name'] = $user_wrapper->{'field_name_last'}->value();
   $user_address['name_line'] = $user_address['first_name'] . ' ' . $user_address['last_name'];
-  $user_address += addressfield_default_values();
+
+  // Addressfield now requires field info for default values.
+  $field = field_info_field('field_address');
+  $field_instance = field_info_instance('user','field_address', 'user');
+
+  $user_address += addressfield_default_values($field, $field_instance);
 
   $commerce_customer_profile->commerce_customer_address[LANGUAGE_NONE][0] = $user_address;
+
   commerce_customer_profile_save($commerce_customer_profile);
+
+  return true;
 }
 
 /**
@@ -167,9 +185,9 @@ function _ef_users_update_commerce_customer_billing_profile($edit, $account) {
 function _ef_users_get_customer_profile($user, $type = 'billing') {
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'commerce_customer_profile')
-    ->propertyCondition('type', $type)
-    ->propertyCondition('uid', $user->uid)
-    ->propertyCondition('status', 1);
+        ->propertyCondition('type', $type)
+        ->propertyCondition('uid', $user->uid)
+        ->propertyCondition('status', 1);
   $result = $query->execute();
 
   if (isset($result['commerce_customer_profile'])) {
@@ -189,11 +207,13 @@ function _ef_users_profile_filled_in() {
   /** @var EntityDrupalWrapper $user_wrapper */
   $user_wrapper = entity_metadata_wrapper('user', $user->uid);
 
-  if (!$user_wrapper->__isset('field_name_first') || !$user_wrapper->__isset('field_name_last') || !$user_wrapper->__isset('field_address')) {
+  try {
+    return !(!$user_wrapper->{'field_name_first'}->value()
+             || !$user_wrapper->{'field_name_last'}->value()
+             || !$user_wrapper->{'field_address'}->value());
+  } catch (EntityMetadataWrapperException $e) {
     return false;
   }
-
-  return !(!$user_wrapper->field_name_first->value() || !$user_wrapper->field_name_last->value() || !$user_wrapper->field_address->value());
 }
 
 /**
