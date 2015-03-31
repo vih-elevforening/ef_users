@@ -100,6 +100,11 @@ function ef_users_init() {
 
   global $user;
 
+  // Do not act if the user profile form is being submitted.
+  if ('user/' . $user->uid . '/edit-profile' == current_path() && !empty($_POST)) {
+    return;
+  }
+
   if (!_ef_users_profile_filled_in()) {
     drupal_set_message(t('Please set your contact information on your !link.', array('!link' => l(t('profile page'), 'user/' . $user->uid . '/edit-profile', array('query' => array('destination' => request_path()))))), 'status', FALSE);
   }
