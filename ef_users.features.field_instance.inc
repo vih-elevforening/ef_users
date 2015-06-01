@@ -29,7 +29,7 @@ function ef_users_field_default_field_instances() {
         'label' => 'above',
         'module' => 'addressfield',
         'settings' => array(
-         'default_country' => 'site_default',
+          'default_country' => 'site_default',
           'format_handlers' => array(
             0 => 'address',
           ),
@@ -52,6 +52,7 @@ function ef_users_field_default_field_instances() {
       'module' => 'addressfield',
       'settings' => array(
         'available_countries' => array(),
+        'default_country' => 'site_default',
         'format_handlers' => array(
           'address' => 'address',
           'address-hide-country' => 0,
