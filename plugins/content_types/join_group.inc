@@ -13,7 +13,20 @@ $plugin = array(
  * Implements hook_content_type_render().
  */
 function ef_users_join_group_content_type_render($subtype, $conf, $panel_args, $context) {
-  $memberships = og_get_groups_by_user(NULL, 'node');
+  $memberships = array();
+  $wrapper = entity_metadata_wrapper('user', $GLOBALS['user']->uid);
+  $og_memberships_active = $wrapper->{'og_membership__' . OG_STATE_ACTIVE}->value();
+  foreach ($og_memberships_active as $membership) {
+    if ($membership->group_type == 'node') {
+      $memberships[] = $membership;
+    }
+  }
+  $og_memberships_pending = $wrapper->{'og_membership__' . OG_STATE_PENDING}->value();
+  foreach ($og_memberships_pending as $membership) {
+    if ($membership->group_type == 'node') {
+      $memberships[] = $membership;
+    }
+  }
 
   // If the user has active or pending memberships, we're done here.
   if (!empty($memberships)) {
